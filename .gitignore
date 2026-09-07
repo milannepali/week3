@@ -1,2 +1,8 @@
 node_modules
 .env
+
+# ignore content of uploads folder
+uploads/*
+
+# except .gitkeep
+!uploads/.gitkeep
