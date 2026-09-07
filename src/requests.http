@@ -1,0 +1,9 @@
+POST http://127.0.0.1:3000/api/v1/cats
+Content-Type: application/json
+
+{
+  "name": "Oliver",
+  "birthdate": "2023-01-20",
+  "weight": 5.2,
+  "owner": "Alex"
+}
