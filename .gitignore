@@ -6,3 +6,5 @@ uploads/*
 
 # except .gitkeep
 !uploads/.gitkeep
+
+.env
