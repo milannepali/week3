@@ -10,26 +10,22 @@ import {
   getCatsByUser,
 } from '../controllers/cat-controller.js';
 
+import { authenticateToken } from '../../middlewares/authentication.js';
+
 const catRouter = express.Router();
 
 const upload = multer({ dest: 'uploads/' });
 
-// Get all cats
 catRouter.get('/', getCats);
 
-// Get cats by user id
 catRouter.get('/user/:id', getCatsByUser);
 
-// Get one cat by cat id
 catRouter.get('/:id', getCat);
 
-// Add new cat with image
 catRouter.post('/', upload.single('cat'), postCat);
 
-// Update cat
-catRouter.put('/:id', putCat);
+catRouter.put('/:id', authenticateToken, putCat);
 
-// Delete cat
-catRouter.delete('/:id', deleteCat);
+catRouter.delete('/:id', authenticateToken, deleteCat);
 
 export default catRouter;

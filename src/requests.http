@@ -7,3 +7,138 @@ Content-Type: application/json
   "weight": 5.2,
   "owner": "Alex"
 }
+
+### Add user
+POST http://127.0.0.1:3000/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "Alice Smith",
+  "username": "alicesmith",
+  "email": "alice@metropolia.fi",
+  "role": "user",
+  "password": "password"
+}
+
+### Update user
+PUT http://127.0.0.1:3000/api/v1/users/1
+Content-Type: application/json
+
+{
+  "name": "Updated User"
+}
+
+### Delete user
+DELETE http://127.0.0.1:3000/api/v1/users/1
+
+### Update cat
+PUT http://127.0.0.1:3000/api/v1/cats/1
+Content-Type: application/json
+
+{
+  "name": "Updated Cat"
+}
+
+### Delete cat
+DELETE http://127.0.0.1:3000/api/v1/cats/1
+
+### Upload cat with image
+POST http://127.0.0.1:3000/api/v1/cats
+Content-Type: multipart/form-data; boundary=MyBoundary
+
+--MyBoundary
+Content-Disposition: form-data; name="cat_name"
+
+Misu
+--MyBoundary
+Content-Disposition: form-data; name="weight"
+
+6
+--MyBoundary
+Content-Disposition: form-data; name="owner"
+
+3602
+--MyBoundary
+Content-Disposition: form-data; name="birthdate"
+
+2023-10-08
+--MyBoundary
+Content-Disposition: form-data; name="cat"; filename="cat.jpg"
+Content-Type: image/jpeg
+
+< ../public/cat.jpg
+--MyBoundary--
+
+### Add user
+POST http://127.0.0.1:3000/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "Alice Smith",
+  "username": "alice",
+  "email": "alice@metropolia.fi",
+  "password": "password",
+  "role": "user"
+}
+
+### Update database user
+PUT http://127.0.0.1:3000/api/v1/users/38
+Content-Type: application/json
+
+{
+  "name": "Alice Updated"
+}
+
+### Delete database user
+DELETE http://127.0.0.1:3000/api/v1/users/38
+
+### Add cat to database
+POST http://127.0.0.1:3000/api/v1/cats
+Content-Type: multipart/form-data; boundary=MyBoundary
+
+--MyBoundary
+Content-Disposition: form-data; name="cat_name"
+
+Misu
+--MyBoundary
+Content-Disposition: form-data; name="weight"
+
+6
+--MyBoundary
+Content-Disposition: form-data; name="owner"
+
+37
+--MyBoundary
+Content-Disposition: form-data; name="birthdate"
+
+2023-10-08
+--MyBoundary
+Content-Disposition: form-data; name="cat"; filename="cat.jpg"
+Content-Type: image/jpeg
+
+< ../public/cat.jpg
+--MyBoundary--
+
+### Update database cat
+PUT http://127.0.0.1:3000/api/v1/cats/43
+Content-Type: application/json
+
+{
+  "cat_name": "Misu Updated",
+  "weight": 7
+}
+
+### Delete database cat
+DELETE http://127.0.0.1:3000/api/v1/cats/43
+
+### Create user with hashed password
+POST http://127.0.0.1:3000/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "Login Test",
+  "username": "logintest",
+  "email": "logintest@metropolia.fi",
+  "password": "mypassword123",
+  "role": "user"
+}

@@ -1,15 +1,21 @@
 import promisePool from '../../utils/database.js';
 
-// Get all users
+// Get all users without passwords
 const getAllUsers = async () => {
-  const [rows] = await promisePool.query('SELECT * FROM wsk_users');
+  const [rows] = await promisePool.query(`
+    SELECT user_id, name, username, email, role
+    FROM wsk_users
+  `);
+
   return rows;
 };
 
-// Get one user by id
+// Get one user by id without password
 const getUserById = async (id) => {
   const [rows] = await promisePool.execute(
-    'SELECT * FROM wsk_users WHERE user_id = ?',
+    `SELECT user_id, name, username, email, role
+     FROM wsk_users
+     WHERE user_id = ?`,
     [id],
   );
 
@@ -20,7 +26,22 @@ const getUserById = async (id) => {
   return rows[0];
 };
 
-// Add user
+// Find user by username
+// Password IS included here because login needs it for bcrypt.compare()
+const findUserByUsername = async (username) => {
+  const [rows] = await promisePool.execute(
+    'SELECT * FROM wsk_users WHERE username = ?',
+    [username],
+  );
+
+  if (rows.length === 0) {
+    return false;
+  }
+
+  return rows[0];
+};
+
+// Add new user
 const addUser = async (user) => {
   const { name, username, email, password, role } = user;
 
@@ -87,8 +108,10 @@ const removeUser = async (id) => {
   try {
     await connection.beginTransaction();
 
+    // Delete cats belonging to the user first
     await connection.execute('DELETE FROM wsk_cats WHERE owner = ?', [id]);
 
+    // Delete user
     const [result] = await connection.execute(
       'DELETE FROM wsk_users WHERE user_id = ?',
       [id],
@@ -110,4 +133,11 @@ const removeUser = async (id) => {
   }
 };
 
-export { getAllUsers, getUserById, addUser, modifyUser, removeUser };
+export {
+  getAllUsers,
+  getUserById,
+  findUserByUsername,
+  addUser,
+  modifyUser,
+  removeUser,
+};

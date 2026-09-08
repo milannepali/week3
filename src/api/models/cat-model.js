@@ -54,7 +54,7 @@ const addCat = async (cat) => {
 };
 
 // Update cat
-const modifyCat = async (cat, id) => {
+const modifyCat = async (cat, id, user) => {
   const allowedFields = [
     'cat_name',
     'weight',
@@ -77,13 +77,27 @@ const modifyCat = async (cat, id) => {
     return false;
   }
 
-  values.push(id);
+  let sql;
 
-  const sql = `
-    UPDATE wsk_cats
-    SET ${fields.join(', ')}
-    WHERE cat_id = ?
-  `;
+  // Admin can update any cat
+  if (user.role === 'admin') {
+    sql = `
+      UPDATE wsk_cats
+      SET ${fields.join(', ')}
+      WHERE cat_id = ?
+    `;
+
+    values.push(id);
+  } else {
+    // Regular user can update only their own cat
+    sql = `
+      UPDATE wsk_cats
+      SET ${fields.join(', ')}
+      WHERE cat_id = ? AND owner = ?
+    `;
+
+    values.push(id, user.user_id);
+  }
 
   const [result] = await promisePool.execute(sql, values);
 
@@ -95,11 +109,21 @@ const modifyCat = async (cat, id) => {
 };
 
 // Delete cat
-const removeCat = async (id) => {
-  const [result] = await promisePool.execute(
-    'DELETE FROM wsk_cats WHERE cat_id = ?',
-    [id],
-  );
+const removeCat = async (id, user) => {
+  let sql;
+  let params;
+
+  // Admin can delete any cat
+  if (user.role === 'admin') {
+    sql = 'DELETE FROM wsk_cats WHERE cat_id = ?';
+    params = [id];
+  } else {
+    // Regular user can delete only their own cat
+    sql = 'DELETE FROM wsk_cats WHERE cat_id = ? AND owner = ?';
+    params = [id, user.user_id];
+  }
+
+  const [result] = await promisePool.execute(sql, params);
 
   if (result.affectedRows === 0) {
     return false;
@@ -108,7 +132,7 @@ const removeCat = async (id) => {
   return { message: 'success' };
 };
 
-// Get cats belonging to one user
+// Get cats by user id
 const getCatsByUserId = async (userId) => {
   const [rows] = await promisePool.execute(
     `SELECT wsk_cats.*, wsk_users.name AS owner_name

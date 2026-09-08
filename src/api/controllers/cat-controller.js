@@ -18,7 +18,7 @@ const getCats = async (req, res) => {
   }
 };
 
-// Get one cat by id
+// Get one cat
 const getCat = async (req, res) => {
   try {
     const cat = await getCatById(req.params.id);
@@ -37,9 +37,6 @@ const getCat = async (req, res) => {
 // Add new cat
 const postCat = async (req, res) => {
   try {
-    console.log(req.body);
-    console.log(req.file);
-
     const cat = {
       ...req.body,
       filename: req.file?.filename,
@@ -64,10 +61,14 @@ const postCat = async (req, res) => {
 // Update cat
 const putCat = async (req, res) => {
   try {
-    const result = await modifyCat(req.body, req.params.id);
+    const loggedInUser = res.locals.user;
+
+    const result = await modifyCat(req.body, req.params.id, loggedInUser);
 
     if (!result) {
-      return res.status(404).json({ message: 'Cat not found.' });
+      return res.status(403).json({
+        message: 'Not allowed to update this cat.',
+      });
     }
 
     res.json({ message: 'Cat item updated.' });
@@ -80,10 +81,14 @@ const putCat = async (req, res) => {
 // Delete cat
 const deleteCat = async (req, res) => {
   try {
-    const result = await removeCat(req.params.id);
+    const loggedInUser = res.locals.user;
+
+    const result = await removeCat(req.params.id, loggedInUser);
 
     if (!result) {
-      return res.status(404).json({ message: 'Cat not found.' });
+      return res.status(403).json({
+        message: 'Not allowed to delete this cat.',
+      });
     }
 
     res.json({ message: 'Cat item deleted.' });

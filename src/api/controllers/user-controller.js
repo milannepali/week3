@@ -1,3 +1,5 @@
+import bcrypt from 'bcrypt';
+
 import {
   getAllUsers,
   getUserById,
@@ -17,7 +19,7 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Get one user by id
+// Get one user
 const getUser = async (req, res) => {
   try {
     const user = await getUserById(req.params.id);
@@ -33,9 +35,15 @@ const getUser = async (req, res) => {
   }
 };
 
-// Add user
+// Register new user
 const postUser = async (req, res) => {
   try {
+    // Hash password before saving
+    req.body.password = bcrypt.hashSync(req.body.password, 10);
+
+    // New registrations are always regular users
+    req.body.role = 'user';
+
     const result = await addUser(req.body);
 
     if (!result) {
@@ -55,29 +63,69 @@ const postUser = async (req, res) => {
 // Update user
 const putUser = async (req, res) => {
   try {
+    const loggedInUser = res.locals.user;
+    const userId = Number(req.params.id);
+
+    // Regular users can update only themselves.
+    // Admin can update anyone.
+    if (loggedInUser.user_id !== userId && loggedInUser.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Not allowed to update this user.',
+      });
+    }
+
+    // Regular users cannot change their role
+    if (loggedInUser.role !== 'admin') {
+      delete req.body.role;
+    }
+
+    // Hash password if user changes it
+    if (req.body.password) {
+      req.body.password = bcrypt.hashSync(req.body.password, 10);
+    }
+
     const result = await modifyUser(req.body, req.params.id);
 
     if (!result) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({
+        message: 'User not found.',
+      });
     }
 
-    res.json({ message: 'User item updated.' });
+    res.json({
+      message: 'User item updated.',
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Database error' });
   }
 };
 
-// Delete user and their cats
+// Delete user
 const deleteUser = async (req, res) => {
   try {
+    const loggedInUser = res.locals.user;
+    const userId = Number(req.params.id);
+
+    // Regular users can delete only themselves.
+    // Admin can delete anyone.
+    if (loggedInUser.user_id !== userId && loggedInUser.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Not allowed to delete this user.',
+      });
+    }
+
     const result = await removeUser(req.params.id);
 
     if (!result) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({
+        message: 'User not found.',
+      });
     }
 
-    res.json({ message: 'User item deleted.' });
+    res.json({
+      message: 'User item deleted.',
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Database error' });
