@@ -4,31 +4,27 @@ import { findUserByUsername } from '../models/user-model.js';
 import 'dotenv/config';
 
 // Login user
-const postLogin = async (req, res) => {
+const postLogin = async (req, res, next) => {
   try {
     const user = await findUserByUsername(req.body.username);
 
-    // Username not found
     if (!user) {
-      return res.status(401).json({
-        message: 'Invalid username or password.',
-      });
+      const error = new Error('Invalid username or password.');
+      error.status = 401;
+      return next(error);
     }
 
-    // Check password
     const passwordMatch = await bcrypt.compare(
       req.body.password,
       user.password,
     );
 
-    // Wrong password
     if (!passwordMatch) {
-      return res.status(401).json({
-        message: 'Invalid username or password.',
-      });
+      const error = new Error('Invalid username or password.');
+      error.status = 401;
+      return next(error);
     }
 
-    // Do not include password in token or response
     const userWithNoPassword = {
       user_id: user.user_id,
       name: user.name,
@@ -37,7 +33,6 @@ const postLogin = async (req, res) => {
       role: user.role,
     };
 
-    // Create JWT token
     const token = jwt.sign(userWithNoPassword, process.env.JWT_SECRET, {
       expiresIn: '24h',
     });
@@ -47,22 +42,25 @@ const postLogin = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: 'Login error.',
-    });
+    next(error);
   }
 };
 
-// Get logged-in user from token
-const getMe = async (req, res) => {
-  if (res.locals.user) {
+// Get logged-in user
+const getMe = async (req, res, next) => {
+  try {
+    if (!res.locals.user) {
+      const error = new Error('Authentication required.');
+      error.status = 401;
+      return next(error);
+    }
+
     res.json({
       message: 'token ok',
       user: res.locals.user,
     });
-  } else {
-    res.sendStatus(401);
+  } catch (error) {
+    next(error);
   }
 };
 

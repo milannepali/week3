@@ -9,36 +9,35 @@ import {
 } from '../models/user-model.js';
 
 // Get all users
-const getUsers = async (req, res) => {
+const getUsers = async (req, res, next) => {
   try {
     const users = await getAllUsers();
     res.json(users);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Get one user
-const getUser = async (req, res) => {
+const getUser = async (req, res, next) => {
   try {
     const user = await getUserById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+      const error = new Error('User not found.');
+      error.status = 404;
+      return next(error);
     }
 
     res.json(user);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Register new user
-const postUser = async (req, res) => {
+const postUser = async (req, res, next) => {
   try {
-    // Hash password before saving
     req.body.password = bcrypt.hashSync(req.body.password, 10);
 
     // New registrations are always regular users
@@ -47,7 +46,9 @@ const postUser = async (req, res) => {
     const result = await addUser(req.body);
 
     if (!result) {
-      return res.status(400).json({ message: 'User was not added.' });
+      const error = new Error('User was not added.');
+      error.status = 400;
+      return next(error);
     }
 
     res.status(201).json({
@@ -55,23 +56,22 @@ const postUser = async (req, res) => {
       ...result,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Update user
-const putUser = async (req, res) => {
+const putUser = async (req, res, next) => {
   try {
     const loggedInUser = res.locals.user;
     const userId = Number(req.params.id);
 
-    // Regular users can update only themselves.
-    // Admin can update anyone.
+    // Regular users can update only themselves
+    // Admin can update anyone
     if (loggedInUser.user_id !== userId && loggedInUser.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Not allowed to update this user.',
-      });
+      const error = new Error('Not allowed to update this user.');
+      error.status = 403;
+      return next(error);
     }
 
     // Regular users cannot change their role
@@ -79,7 +79,7 @@ const putUser = async (req, res) => {
       delete req.body.role;
     }
 
-    // Hash password if user changes it
+    // Hash password if changed
     if (req.body.password) {
       req.body.password = bcrypt.hashSync(req.body.password, 10);
     }
@@ -87,48 +87,46 @@ const putUser = async (req, res) => {
     const result = await modifyUser(req.body, req.params.id);
 
     if (!result) {
-      return res.status(404).json({
-        message: 'User not found.',
-      });
+      const error = new Error('User not found.');
+      error.status = 404;
+      return next(error);
     }
 
     res.json({
       message: 'User item updated.',
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Delete user
-const deleteUser = async (req, res) => {
+const deleteUser = async (req, res, next) => {
   try {
     const loggedInUser = res.locals.user;
     const userId = Number(req.params.id);
 
-    // Regular users can delete only themselves.
-    // Admin can delete anyone.
+    // Regular users can delete only themselves
+    // Admin can delete anyone
     if (loggedInUser.user_id !== userId && loggedInUser.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Not allowed to delete this user.',
-      });
+      const error = new Error('Not allowed to delete this user.');
+      error.status = 403;
+      return next(error);
     }
 
     const result = await removeUser(req.params.id);
 
     if (!result) {
-      return res.status(404).json({
-        message: 'User not found.',
-      });
+      const error = new Error('User not found.');
+      error.status = 404;
+      return next(error);
     }
 
     res.json({
       message: 'User item deleted.',
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 

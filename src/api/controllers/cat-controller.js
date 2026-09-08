@@ -8,44 +8,52 @@ import {
 } from '../models/cat-model.js';
 
 // Get all cats
-const getCats = async (req, res) => {
+const getCats = async (req, res, next) => {
   try {
     const cats = await getAllCats();
     res.json(cats);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Get one cat
-const getCat = async (req, res) => {
+const getCat = async (req, res, next) => {
   try {
     const cat = await getCatById(req.params.id);
 
     if (!cat) {
-      return res.status(404).json({ message: 'Cat not found.' });
+      const error = new Error('Cat not found.');
+      error.status = 404;
+      return next(error);
     }
 
     res.json(cat);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Add new cat
-const postCat = async (req, res) => {
+const postCat = async (req, res, next) => {
   try {
+    if (!req.file) {
+      const error = new Error('Invalid or missing file');
+      error.status = 400;
+      return next(error);
+    }
+
     const cat = {
       ...req.body,
-      filename: req.file?.filename,
+      filename: req.file.filename,
     };
 
     const result = await addCat(cat);
 
     if (!result) {
-      return res.status(400).json({ message: 'Cat was not added.' });
+      const error = new Error('Cat was not added.');
+      error.status = 400;
+      return next(error);
     }
 
     res.status(201).json({
@@ -53,59 +61,59 @@ const postCat = async (req, res) => {
       ...result,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Update cat
-const putCat = async (req, res) => {
+const putCat = async (req, res, next) => {
   try {
     const loggedInUser = res.locals.user;
 
     const result = await modifyCat(req.body, req.params.id, loggedInUser);
 
     if (!result) {
-      return res.status(403).json({
-        message: 'Not allowed to update this cat.',
-      });
+      const error = new Error('Not allowed to update this cat.');
+      error.status = 403;
+      return next(error);
     }
 
-    res.json({ message: 'Cat item updated.' });
+    res.json({
+      message: 'Cat item updated.',
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Delete cat
-const deleteCat = async (req, res) => {
+const deleteCat = async (req, res, next) => {
   try {
     const loggedInUser = res.locals.user;
 
     const result = await removeCat(req.params.id, loggedInUser);
 
     if (!result) {
-      return res.status(403).json({
-        message: 'Not allowed to delete this cat.',
-      });
+      const error = new Error('Not allowed to delete this cat.');
+      error.status = 403;
+      return next(error);
     }
 
-    res.json({ message: 'Cat item deleted.' });
+    res.json({
+      message: 'Cat item deleted.',
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
 // Get cats by user id
-const getCatsByUser = async (req, res) => {
+const getCatsByUser = async (req, res, next) => {
   try {
     const cats = await findCatsByUserId(req.params.id);
     res.json(cats);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error' });
+    next(error);
   }
 };
 
